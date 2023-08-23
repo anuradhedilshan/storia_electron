@@ -1,0 +1,48 @@
+async function getAds(
+  ids: { id: string; slug: string }[],
+  BuildID: string,
+  proxylist: ProxyList
+) {
+  console.log("Get Ads calling");
+  const promises = [];
+  let succeeded = 0;
+  let failed = 0;
+  const data: any[] = [];
+  let proxy = proxylist.getProxy();
+
+  for (const i of ids) {
+    await sleep(100);
+    if (!proxy.canUse()) {
+      proxy = proxylist.getProxy();
+    }
+    promises.push(
+      proxy
+        .fetch(getAdURL(i.slug, BuildID), Headers as RawAxiosRequestHeaders)
+        .then((response: AxiosResponse) => {
+          if (response.status >= 400 && response.status < 600) {
+            proxy.setWait();
+            throw new Error(`Server error: ${response.status}`);
+          }
+          succeeded++;
+          console.log(response);
+
+          const parseddaat = parseAd(response.data["pageProps"]["ad"]);
+
+          data.push(parseddaat);
+        })
+        .catch((error: AxiosError) => {
+          console.error("Error:", error);
+          failed += 1;
+          return {
+            url: error.request,
+          };
+        })
+    );
+  }
+
+  const a = await Promise.allSettled(promises);
+
+  console.log(`Successful requests: ${succeeded}, Failed requests: ${failed}`);
+
+  return { succeeded, failed, data };
+}

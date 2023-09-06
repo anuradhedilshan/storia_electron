@@ -19,4 +19,6 @@ declare namespace NodeJS {
     /** /dist/ or /public/ */
     PUBLIC: string
   }
+
 }
+

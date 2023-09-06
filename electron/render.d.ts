@@ -1,9 +1,12 @@
 // import Proxy from "../src/engine/proxy/Proxy";
-
+export type CB = (
+  Type: "progress" | "count" | "complete" | "error" | "details"|"warn",
+  message: number | boolean | string| null
+) => void;
 export interface IElectronAPI {
-  setProxyList: (string) => Promise<{less : string , full : string}[]>;
+  setProxyList: (string) => Promise<{ less: string; full: string }[]>;
   onSubmit: (OBJ, filepath: string) => void;
-  OnEvent: ((Type: "progress" | "count" | "complete", p: number | boolean) => void) | null;
+  OnEvent: CB | null;
   getCount: (OBJ) => void;
 }
 

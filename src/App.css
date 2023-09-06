@@ -1,8 +1,9 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   text-align: center;
+  overflow-y:hidden ;
 }
 
 .logo {
@@ -126,4 +127,20 @@ h2.online-text {
   100% { transform: scale(2, 2); 
           opacity: 0;
         }
+}
+
+/* custom css */
+.error{
+  color: red;
+}
+.warn {
+  color: yellow;
+}
+
+.details {
+  color: #3795f6;
+}
+
+.log b {
+  color: #0fcc45;
 }

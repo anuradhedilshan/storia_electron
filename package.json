@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder --mac",
+    "build": "tsc && vite build && electron-builder  ",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "ts-node --esm ./src/Test.ts"
@@ -13,6 +13,7 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.14.3",
     "@mui/joy": "^5.0.0-beta.0",
+    "@radix-ui/react-toast": "^1.1.4",
     "axios": "^1.4.0",
     "electron-store": "^8.1.0",
     "node-fetch": "^3.3.2",

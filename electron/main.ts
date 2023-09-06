@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "node:path";
 import ProxyList from "../src/engine/proxy";
 import { dialog } from "electron";
-import { getRedirect, startf } from "../src/engine/Engine";
+import { getRedirect, setLoggerCallback, startf } from "../src/engine/Engine";
 import Proxy from "../src/engine/proxy/Proxy";
+import { CB } from "./render";
 
 // The built directory structure
 //
@@ -68,29 +70,39 @@ ipcMain.handle("openPathDialog", async () => {
 
 // custom
 
-const PL = new ProxyList();
+// Logger Init
+
+const f: CB = (Type, p) => {
+  if (win) win.webContents.send("event", { Type, p });
+};
+
+const logger = setLoggerCallback(f);
+
+const PL = new ProxyList(logger);
 
 ipcMain.on("start", async (event, arg) => {
+  logger.log("Staring . . . . ");
   const { data, filepath, buildID } = arg;
   if (PL.getProxyCount() >= 1) {
     const a: string = await getRedirect(data, buildID);
+    logger.log(`Get Redirecting - <i>${a}</i>`);
     startf(a, buildID, PL, filepath, (el, val) => {
       event.sender.send("event", { el, val });
     });
   } else {
-    event.sender.send("error", "No Usable PRoxy");
+    logger.error("No Usable Proxy");
   }
 });
 
 ipcMain.handle("addProxy", async (_e, arg) => {
-  console.log("Add proxy");
-
   const working = [];
   for (const i of arg.trim().split("\n")) {
-    console.log("Ip Testing", i);
-
     const out = await PL.addProxy(i);
     if (out) working.push((out as Proxy).getProxyString());
   }
   return working;
+});
+
+ipcMain.on("relanch", (_e, _arg) => {
+  win?.reload();
 });

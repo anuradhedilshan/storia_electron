@@ -1,4 +1,4 @@
-export default function parseAd(data: any) {
+export default function parseAd(data: any): string {
   delete data.images;
   const d = {
     id: data.id,
@@ -45,10 +45,10 @@ export default function parseAd(data: any) {
     // owner
     ownerName: data.owner?.name || "N/A",
     ownerType: data.owner?.type || "N/A",
-    phones: `[${data.owner.phones.toString()}]`
+    phones: `[${data.owner.phones.toString()}]`,
   };
 
-  return JSON.stringify(d);
+  return d;
 }
 
 function getObjectValue(obj: any) {

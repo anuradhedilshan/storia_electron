@@ -6,25 +6,50 @@ import Proxylist from "./components/proxy_switcher/ProxyList";
 import { ActionType } from "./store/app.store";
 import { DataView } from "./components/dataview";
 import { context } from "./store/app.store";
+import Logger_View from "./components/Logger_view";
+function padTo2Digits(num:number) {
+  return num.toString().padStart(2, "0");
+}
+function formatDate(date: Date) {
+  return (
+    [
+      date.getFullYear(),
+      padTo2Digits(date.getMonth() + 1),
+      padTo2Digits(date.getDate()),
+    ].join("-") +
+    " " +
+    [
+      padTo2Digits(date.getHours()),
+      padTo2Digits(date.getMinutes()),
+      padTo2Digits(date.getSeconds()),
+    ].join(":")
+  );
+}
 export default class APP extends React.Component {
   static contextType = context;
   declare context: React.ContextType<typeof context>;
 
+  parseLog(type: "error" | "warn" | "details", message: string | number) {
+    return `   <span class='${type} log'><span align="left" style="color:grey">${formatDate(
+      new Date()
+    )} : </span> ${message}</span> <br />`;
+  }
   render(): React.ReactNode {
     window.MyApi.OnEvent = (
-      type: "progress" | "count" | "complete",
-      p: number | boolean
+      Type: "progress" | "count" | "complete" | "error" | "details" | "warn",
+      message: number | boolean | string | null
     ) => {
-      switch (type) {
+      switch (Type) {
         case "count":
-          console.log("Count", p);
+          message = message ? message : "retry";
+          console.log("Count", message);
           this.context.dispatch({
             type: ActionType.SETSEARCHLOADING,
             payload: false,
           });
           this.context.dispatch({
             type: ActionType.SETCOUNT,
-            payload: { counter: p },
+            payload: { counter: message },
           });
           this.context.dispatch({
             type: ActionType.SET_RUNNING_STATE,
@@ -32,18 +57,29 @@ export default class APP extends React.Component {
           });
           break;
         case "progress":
-          console.log("Progress++++++++++++++++++++++++", p);
+          console.log("Progress++++++++++++++++++++++++", message);
 
-          this.context.dispatch({ type: ActionType.SETPROGRESS, payload: p });
+          this.context.dispatch({
+            type: ActionType.SETPROGRESS,
+            payload: message,
+          });
           break;
         case "complete":
           this.context.dispatch({
             type: ActionType.SET_AS_COMPLETE,
-            payload: p,
+            payload: message,
           });
           this.context.dispatch({
             type: ActionType.SET_RUNNING_STATE,
             payload: false,
+          });
+          break;
+        case "error":
+        case "warn":
+        case "details":
+          this.context.dispatch({
+            type: ActionType.SET_LOGGER_DATA,
+            payload: this.parseLog(Type, message as string),
           });
           break;
       }
@@ -63,6 +99,9 @@ export default class APP extends React.Component {
             <Proxylist />
           </Grid>
         </Grid>
+        <div style={{ paddingTop: "5px", width: "100%" }}>
+          <Logger_View />
+        </div>
       </Container>
     );
   }

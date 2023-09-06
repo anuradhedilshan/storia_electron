@@ -1,3 +1,4 @@
+import Logger from "../Logger";
 import Proxy from "./Proxy";
 
 // Parse PRoxy
@@ -10,14 +11,17 @@ interface ParsedProxy {
 }
 
 export default class ProxyList {
+  logger: Logger;
   static getProxy() {
     throw new Error("Method not implemented.");
   }
   PROXYLIST: Proxy[] = [];
-
+  constructor(logger: Logger) {
+    this.logger = logger;
+  }
   async addProxy(prxy: string): Promise<Proxy | boolean> {
     //protocol://host:port
-    console.log("Add Proxy", prxy);
+    this.logger.log("parsing Proxy <b>" + prxy + "</b>.......");
 
     const a = this.parseProxy(prxy);
     if (a) {
@@ -31,11 +35,11 @@ export default class ProxyList {
       const p = new Proxy(a.host, parseInt(a.port), a.protocol, auth);
 
       if (await p.isLive()) {
-        console.info("Proxy Added :)", prxy);
+        this.logger.log("Proxy Added <b>:)</b> - <b>" + prxy + "</b>");
         this.PROXYLIST.push(p);
         return p;
       } else {
-        console.warn("not working", prxy);
+        this.logger.warn("Proxy Not working: <b>" + prxy + "</b>");
         return false;
       }
     }
@@ -57,7 +61,7 @@ export default class ProxyList {
     const match = proxyString.match(proxyRegex);
 
     if (!match) {
-      console.log("Invalid proxy format");
+      this.logger.error("Invalid proxy format");
       return null;
     }
 

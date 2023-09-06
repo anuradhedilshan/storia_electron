@@ -13,6 +13,7 @@ import { useContext } from "react";
 import FolderIcon from "@mui/icons-material/Folder";
 import { ipcRenderer } from "electron";
 import React from "react";
+// eslint-disable-next-line react-refresh/only-export-components
 const DataView = () => {
   const { state, dispatch } = useContext(context);
   const { progress } = state;
@@ -23,7 +24,7 @@ const DataView = () => {
         maxWidth: "300px",
         width: 300,
         overflowx: "auto",
-        minHeight: 400,
+        minHeight: 300,
       }}
     >
       <CardContent orientation="vertical">
@@ -54,7 +55,7 @@ const DataView = () => {
           }
         />
         <Stack
-          spacing={2}
+          spacing={1}
           direction={"row"}
           px={2}
           py={1}
@@ -141,7 +142,9 @@ const DataView = () => {
                 type: ActionType.SET_RUNNING_STATE,
                 payload: true,
               });
+
               window.MyApi.onSubmit(state.filters, filePath);
+              dispatch({ type: ActionType.CLEAR_LOG, payload: null });
             } else {
               window.alert("SET File Path");
             }

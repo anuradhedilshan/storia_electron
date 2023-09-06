@@ -1,14 +1,24 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { AxiosError, AxiosResponse, RawAxiosRequestHeaders } from "axios";
 import ProxyList from "./proxy";
 import fetch from "node-fetch";
 import parseAd from "./Ad";
 import JSONWriter from "./JSONWriter";
+import Logger from "./Logger";
+import { CB } from "../../electron/render";
+
+let logger: Logger | null = null;
+
+export function setLoggerCallback(cb: CB): Logger {
+  logger = new Logger(cb);
+  return logger;
+}
 
 const Headers: RawAxiosRequestHeaders | HeadersInit = {
   Referer: "https://www.storia.ro/ro/cautare/vanzare/garsoniere/toata-romania",
   "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
 };
 
 const o: { [key: string]: string } = {
@@ -1616,12 +1626,17 @@ export async function startf(
   BUILDID: string,
   proxylist: ProxyList,
   file: string,
-  onEvent:
-    | ((event: "progress" | "count" | "complete", c: number | boolean) => void)
-    | null
+  onEvent: (
+    event: "progress" | "count" | "complete",
+    c: number | boolean
+  ) => void
 ) {
+  if (!logger) {
+    console.error("Logger Callback not defined ");
+    return;
+  }
   const Writer = new JSONWriter(file);
-
+  console.log("STart fuck");
   console.log("fetch Url ", URL);
   const temp: any = await (
     await fetch(URL, { headers: Headers as HeadersInit })
@@ -1631,9 +1646,9 @@ export async function startf(
   const max = temp.pageProps.data.searchAds.pagination.totalPages;
   let Loopfailed: any[] = [];
   // send count
-    const stepper = max !== 0 ? 1 : 0;
-  for (let loop = 1; loop <= max + stepper; loop++) {
-    console.log("Looping+ ", loop, max);
+  const stepper = max !== 0 ? 1 : 0;
+  for (let loop = 1; loop <= max + stepper; loop += 4) {
+    logger?.log(`Looping <b>${max}<b> => <b>${loop}</b>`);
     const response = await fetch(URL.replace(/page=\d+/, "page=" + loop), {
       headers: Headers as HeadersInit,
     });
@@ -1648,18 +1663,18 @@ export async function startf(
               slug: e.slug,
             })
           );
-        console.log("*****IDS", ids.length);
+        console.log(`Page Contain <b>${ids.length}</b> of Ads`);
         if (Loopfailed.length > 0) ids = ids.concat(Loopfailed);
 
         try {
           proxylist.getProxy();
         } catch {
-          console.log("No PRoxy servers useable");
-
           // eslint-disable-next-line no-constant-condition
           while (true) {
+            logger?.log("No Proxy servers useable - Entering 50s Idel Time");
             await sleep(50000);
-            if (proxylist.getProxy()) {
+            if (typeof proxylist.getProxy() == typeof Proxy) {
+              logger?.log("Proxy Get Free");
               break;
             }
           }
@@ -1670,8 +1685,8 @@ export async function startf(
           BUILDID,
           proxylist
         );
-        console.log(`got ${failed} Request -  Retring`);
-
+        ids = [];
+        logger?.log(`got <b>${failed} </b> Failed Request -  Retring`);
         if (data.length > 0) Writer.appendData(data);
         if (failedReq.length > 0) Loopfailed = failedReq;
         // send Progress
@@ -1680,15 +1695,20 @@ export async function startf(
         // do something with response here, not outside the function
       } else if (response.status >= 500 && response.status < 600) {
         console.log("error @ Start 1 ");
+        loop = loop - 1;
+        continue;
       }
     } catch (err) {
       console.error("error @ Start 2 ", err);
+      loop = loop - 1;
+      continue;
     }
   }
   await sleep(5000);
   Writer.close();
+
+  logger?.log("****** Json Writer Commited ************");
   if (onEvent) onEvent("complete", true);
-  console.log("****** CSVWriterCommit ************");
 }
 
 async function getAds(
@@ -1697,7 +1717,7 @@ async function getAds(
   proxylist: ProxyList
 ) {
   console.log("Get Ads calling");
-  const promises = [];
+  const promises: any[] = [];
   let succeeded = 0;
   let failed = 0;
   const data: any[] = [];
@@ -1727,7 +1747,12 @@ async function getAds(
         .fetch(getAdURL(i.slug, BuildID), Headers as RawAxiosRequestHeaders)
 
         .then((response: AxiosResponse) => {
-          if (response.status >= 400 && response.status < 600) {
+          if (response.status >= 410 && response.status < 600) {
+            logger?.warn(
+              `<b> ${proxy.getProxyString()["less"]}</b> -  set 5 minute Idle `
+            );
+            failed += 1;
+            failedReq.push(i);
             proxy.setWait();
             throw new Error(`Server error: ${response.status}`);
           }
@@ -1741,7 +1766,10 @@ async function getAds(
           }
         })
         .catch((error: AxiosError) => {
-          console.error("Error:", error);
+          console.error("Error:", error.status);
+          logger?.warn(
+            `<b> ${proxy.getProxyString()["less"]}</b> -  set 5 minute Idle `
+          );
           proxy.setWait();
           failed += 1;
           failedReq.push(i);
@@ -1751,10 +1779,13 @@ async function getAds(
 
   await Promise.all(promises);
 
-  console.log(`Successful requests: ${succeeded}, Failed requests: ${failed}`);
+  logger?.log(
+    `Successful requests: <b>${succeeded} </b>, Failed requests: <b> ${failed} </b>`
+  );
 
   return { succeeded, failed, data, failedReq };
 }
+// THis function Return Promise After Seconds of input   2023/
 
 function sleep(ms: number): Promise<unknown> {
   return new Promise((resolve) => setTimeout(resolve, ms));

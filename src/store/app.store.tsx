@@ -21,11 +21,12 @@ export type States = {
   filePath: string;
   running: boolean;
   threads: number;
+  logger_data: string;
 };
 
 const InitialValues: States = {
   proxyList: [],
-  workingList:[],
+  workingList: [],
   filters: {
     estate: "FLAT",
     transaction: "SELL",
@@ -43,6 +44,7 @@ const InitialValues: States = {
   filePath: "N/A",
   running: true,
   threads: 4,
+  logger_data: "<span class='details log'>no log</span> </br>",
 };
 
 enum ActionType {
@@ -57,7 +59,9 @@ enum ActionType {
   SET_FILE_PATH,
   SET_RUNNING_STATE,
   SET_THREAD,
-  SET_WORKING_PROXY_LIST
+  SET_WORKING_PROXY_LIST,
+  SET_LOGGER_DATA,
+  CLEAR_LOG
 }
 
 interface Action {
@@ -87,7 +91,14 @@ function reducer(state: States, action: Action) {
     case ActionType.SET_THREAD:
       return { ...state, threads: action.payload };
     case ActionType.SET_WORKING_PROXY_LIST:
-      return { ...state, workingList: [...state.workingList, ...action.payload] };
+      return {
+        ...state,
+        workingList: [...state.workingList, ...action.payload],
+      };
+    case ActionType.SET_LOGGER_DATA:
+      return { ...state, logger_data: state.logger_data+action.payload };
+    case ActionType.CLEAR_LOG :
+      return  { ...state, logger_data: InitialValues.logger_data };
     default:
       return state;
   }

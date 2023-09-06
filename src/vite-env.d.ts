@@ -1,5 +1,4 @@
 import { WebviewTag } from "electron";
-import ProxyList from "./engine/proxy";
 /// <reference types="vite/client" />
 
 declare namespace JSX {
@@ -14,4 +13,3 @@ declare global {
     name: string;
   }
 }
-

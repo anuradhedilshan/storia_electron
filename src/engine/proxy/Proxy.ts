@@ -15,7 +15,6 @@ export default class Proxy {
   auth?: AxiosProxyConfig["auth"];
   static TestURL = "";
   Proxyconfig: AxiosRequestConfig;
-  reserved: boolean;
 
   constructor(
     host: string,
@@ -24,8 +23,6 @@ export default class Proxy {
     auth: AxiosProxyConfig["auth"]
   ) {
     console.log("Proxy Auth ", auth);
-
-    this.reserved = false;
     this.host = host;
     this.port = port;
     this.protocol = protocol;
@@ -57,7 +54,7 @@ export default class Proxy {
         },
         headers: {
           "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
         },
       };
     }
@@ -102,13 +99,14 @@ export default class Proxy {
     this.requestsSent = 999;
   }
   canUse() {
-    if (this.requestsSent >= this.maxRequests && this.reserved) {
+    if (this.requestsSent >= this.maxRequests) {
       const timeSinceLastUse = Date.now() - this.lastUsed;
-      return timeSinceLastUse > this.cooldownTime;
+      const is = timeSinceLastUse > this.cooldownTime;
+      if (is) this.requestsSent = 0;
+      return is;
     }
     return true;
   }
-
 
   // mark as USed
   markUsed() {
@@ -116,14 +114,10 @@ export default class Proxy {
 
     this.lastUsed = Date.now();
     this.requestsSent++;
-    this.reserved = true;
   }
 
-  // {id  : string , val : booleanF}
+  // {id  : string , val : boolean }
 
-  markAsReserved(val: boolean) {
-    this.reserved = val;
-  }
   reset() {
     this.lastUsed = 0;
     this.requestsSent = 0;

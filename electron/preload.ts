@@ -1,9 +1,7 @@
 import fetch from "node-fetch";
-import { getBuildId } from "../src/engine";
-import { getRedirect } from "../src/engine/Engine";
+import { getBuildId, getRedirect } from "../src/engine/Engine";
 import { ipcRenderer } from "electron";
-
-console.log(__filename);
+// import { logger } from "./main";
 
 function domReady(
   condition: DocumentReadyState[] = ["complete", "interactive"]
@@ -99,63 +97,95 @@ window.onmessage = (ev) => {
   ev.data.payload === "removeLoading" && removeLoading();
 };
 
-setTimeout(removeLoading, 4999);
-
-// Custom Loading
-
+// setTimeout(removeLoading, 999);
 (async () => {
   // appendLoading();
-  const html = await (await fetch("https://www.storia.ro/")).text();
-  // console.log(html);
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
-  const BuildID = getBuildId(doc);
-  window.BuildID = BuildID;
-  removeLoading();
-  console.log(BuildID);
+  try {
+    const html = await (
+      await fetch("https://www.storia.ro/", {
+        headers: {
+          Referer:
+            "https://www.storia.ro/ro/cautare/vanzare/garsoniere/toata-romania",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+        },
+      })
+    ).text();
+    console.log(html);
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    const BuildID = getBuildId(doc);
+    window.BuildID = BuildID;
+    removeLoading();
+    console.log(BuildID);
+  } catch (e) {
+    console.log(e);
+    if (window.MyApi.OnEvent)
+      window.MyApi.OnEvent("error", "Cannot Parse Build Id Please Reopen App");
+
+    window.alert("Cannot Parse Build Id Please Relanching  App");
+    ipcRenderer.send("relanch");
+  }
 })();
 
 console.log("this is Preload.ts");
 
 ipcRenderer.on("event", (_e, arg) => {
-  if (window.MyApi.OnEvent) window.MyApi.OnEvent(arg.el, arg.val);
+  console.log(arg);
+  sendEvent(arg.Type, arg.p);
 });
 window.MyApi = {
   setProxyList: async (e: string) => {
     return ipcRenderer.invoke("addProxy", e);
   },
   onSubmit: async (data, filepath) => {
+    console.log("On Submit");
+
     if (window.BuildID) {
       ipcRenderer.send("start", { buildID: window.BuildID, filepath, data });
       ipcRenderer.on("error", (_e, t) => {
         window.alert(t);
-        if (window.MyApi.OnEvent) window.MyApi.OnEvent("count", 0);
-        if (window.MyApi.OnEvent) window.MyApi.OnEvent("complete", true);
+        sendEvent("count", 0);
+        sendEvent("complete", true);
       });
     } else {
       window.alert("Please Reopen ");
-      if (window.MyApi.OnEvent) window.MyApi.OnEvent("count", 0);
-      if (window.MyApi.OnEvent) window.MyApi.OnEvent("complete", true);
+      sendEvent("count", 0);
+      sendEvent("complete", true);
     }
   },
   OnEvent: null,
   async getCount(data) {
-    console.log("Get Count");
-
     if (window.BuildID) {
-      const a: string = await getRedirect(data, window.BuildID);
-      console.log(a);
-      const temp: any = await (
-        await fetch(a, {
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
-          },
-        })
-      ).json();
-      // send count
-      const count = temp.pageProps.data.searchAds.pagination.totalResults;
-      if (window.MyApi.OnEvent) window.MyApi.OnEvent("count", count);
+      try {
+        const a: string = await getRedirect(data, window.BuildID);
+        sendEvent("details", `Get Count url : <b> ${a} </b>`);
+        const temp: any = await (
+          await fetch(a, {
+            headers: {
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+            },
+          })
+        ).json();
+        // send count
+
+        const count = temp.pageProps.data.searchAds.pagination.totalResults;
+        if (window.MyApi.OnEvent)
+          window.MyApi.OnEvent("details", `Got <b>${count}</b> as Count`);
+        sendEvent("count", count);
+      } catch (error) {
+        if (window.MyApi.OnEvent)
+          window.MyApi.OnEvent("error", "Failed to get Count Please Try Again");
+        sendEvent("count", null);
+      }
     }
   },
 };
+
+function sendEvent(
+  Type: "progress" | "count" | "complete" | "error" | "details" | "warn",
+  message: number | boolean | string | null
+) {
+  if (window.MyApi.OnEvent) window.MyApi.OnEvent(Type, message);
+}

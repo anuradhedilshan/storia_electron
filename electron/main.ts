@@ -86,7 +86,7 @@ ipcMain.on("start", async (event, arg) => {
   if (PL.getProxyCount() >= 1) {
     const a: string = await getRedirect(data, buildID);
     logger.log(`Get Redirecting - <i>${a}</i>`);
-    startf(a, buildID, PL, filepath, (el, val) => {
+    startf(a, buildID, PL, filepath, data, (el, val) => {
       event.sender.send("event", { el, val });
     });
   } else {

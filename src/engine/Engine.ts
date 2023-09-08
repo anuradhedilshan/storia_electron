@@ -1617,8 +1617,11 @@ export function getBuildId(parser: Document) {
   return buildId;
 }
 
-function getAdURL(slug: string, BUILDID: string) {
-  const url = `https://www.storia.ro/_next/data/${BUILDID}/ro/oferta/${slug}.json?lang=ro&id=${slug}`;
+const mode = ["ansamblu", "oferta"];
+function getAdURL(slug: string, BUILDID: string, estate: string) {
+  console.log(estate);
+  const m = estate == "Ansambluri" ? mode[0] : mode[1];
+  const url = `https://www.storia.ro/_next/data/${BUILDID}/ro/${m}/${slug}.json?lang=ro&id=${slug}`;
   return url;
 }
 
@@ -1627,6 +1630,7 @@ export async function startf(
   BUILDID: string,
   proxylist: ProxyList,
   file: string,
+  filters: OBJ,
   onEvent: (
     event: "progress" | "count" | "complete",
     c: number | boolean
@@ -1684,7 +1688,8 @@ export async function startf(
         const { data, failed, failedReq } = await getAds(
           ids,
           BUILDID,
-          proxylist
+          proxylist,
+          filters.estate
         );
         ids = [];
         logger?.log(`got <b>${failed} </b> Failed Request -  Retring`);
@@ -1707,15 +1712,15 @@ export async function startf(
   }
   await sleep(5000);
   Writer.close();
-
-  logger?.log("****** Json Writer Commited ************");
   if (onEvent) onEvent("complete", true);
+  logger?.log("****** Json Writer Commited ************");
 }
 
 async function getAds(
   ids: { id: string; slug: string }[],
   BuildID: string,
-  proxylist: ProxyList
+  proxylist: ProxyList,
+  estate: string
 ) {
   logger?.log(
     ` Get Ads calling - <b>${ids.length}</b> - Hash :  <i>${BuildID}</i>`
@@ -1743,11 +1748,14 @@ async function getAds(
         break;
       }
     }
-    if (proxy.canUse()) console.log(getAdURL(i.slug, BuildID));
+    if (proxy.canUse()) console.log(getAdURL(i.slug, BuildID, estate));
 
     promises.push(
       proxy
-        .fetch(getAdURL(i.slug, BuildID), Headers as RawAxiosRequestHeaders)
+        .fetch(
+          getAdURL(i.slug, BuildID, estate),
+          Headers as RawAxiosRequestHeaders
+        )
 
         .then((response: AxiosResponse) => {
           // if (response.status >= 410 && response.status < 600)

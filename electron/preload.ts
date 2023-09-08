@@ -139,8 +139,7 @@ window.MyApi = {
     return ipcRenderer.invoke("addProxy", e);
   },
   onSubmit: async (data, filepath) => {
-    console.log("On Submit");
-
+    console.log("On Submit",data);
     if (window.BuildID) {
       ipcRenderer.send("start", { buildID: window.BuildID, filepath, data });
       ipcRenderer.on("error", (_e, t) => {

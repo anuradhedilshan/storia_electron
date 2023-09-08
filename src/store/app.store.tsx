@@ -28,7 +28,7 @@ const InitialValues: States = {
   proxyList: [],
   workingList: [],
   filters: {
-    estate: "FLAT",
+    estate: "Apartamente",
     transaction: "SELL",
     city: "toata-romania",
     range: 10,

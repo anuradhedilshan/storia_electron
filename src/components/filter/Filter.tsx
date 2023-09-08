@@ -8,15 +8,16 @@ import { Card, CircularProgress } from "@mui/joy";
 import { useContext } from "react";
 import { ActionType, context } from "../../store/app.store";
 const b = {
-  FLAT: "apartament",
-  STUDIO_FLAT: "garsoniere",
-  HOUSE: "casa",
-  INVESTMENT: "investitii",
-  ROOM: "camera",
-  TERRAIN: "teren",
-  COMMERCIAL_PROPERTY: "spatiu-comercial",
-  HALL: "depozite-hale",
+  Apartamente: "apartament",
+  Garsoniere: "garsoniere",
+  Case: "casa",
+  Ansambluri: "investitii",
+  Camere: "camera",
+  Terenuri: "teren",
+  "Spații comerciale": "spatiu-comercial",
+  "Hale și depozite": "depozite-hale",
   OFFICE: "birou",
+  Garaje: "garaj",
 };
 const o = { SELL: "vanzare", RENT: "inchiriere" };
 const loc = [
@@ -64,7 +65,6 @@ const loc = [
   "Vaslui",
   "Vrancea",
 ];
-
 
 const Filter = () => {
   const { state, dispatch } = useContext(context);
@@ -134,7 +134,6 @@ const Filter = () => {
         </Grid>
       </Grid>
     </Card>
-    //
   );
 };
 

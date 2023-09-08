@@ -22,15 +22,16 @@ const Headers: RawAxiosRequestHeaders | HeadersInit = {
 };
 
 const o: { [key: string]: string } = {
-  FLAT: "apartament",
-  STUDIO_FLAT: "garsoniere",
-  HOUSE: "casa",
-  INVESTMENT: "investitii",
-  ROOM: "camera",
-  TERRAIN: "teren",
-  COMMERCIAL_PROPERTY: "spatiu-comercial",
-  HALL: "depozite-hale",
+  Apartamente: "apartament",
+  Garsoniere: "garsoniere",
+  Case: "casa",
+  Ansambluri: "investitii",
+  Camere: "camera",
+  Terenuri: "teren",
+  "Spații comerciale": "spatiu-comercial",
+  "Hale și depozite": "depozite-hale",
   OFFICE: "birou",
+  Garaje: "garaj",
 };
 
 const t: { [key: string]: string } = {
@@ -1647,7 +1648,7 @@ export async function startf(
   let Loopfailed: any[] = [];
   // send count
   const stepper = max !== 0 ? 1 : 0;
-  for (let loop = 1; loop <= max + stepper; loop += 4) {
+  for (let loop = 1; loop <= max + stepper; loop += 1) {
     logger?.log(`Looping <b>${max}<b> => <b>${loop}</b>`);
     const response = await fetch(URL.replace(/page=\d+/, "page=" + loop), {
       headers: Headers as HeadersInit,
@@ -1716,7 +1717,9 @@ async function getAds(
   BuildID: string,
   proxylist: ProxyList
 ) {
-  console.log("Get Ads calling");
+  logger?.log(
+    ` Get Ads calling - <b>${ids.length}</b> - Hash :  <i>${BuildID}</i>`
+  );
   const promises: any[] = [];
   let succeeded = 0;
   let failed = 0;
@@ -1747,9 +1750,13 @@ async function getAds(
         .fetch(getAdURL(i.slug, BuildID), Headers as RawAxiosRequestHeaders)
 
         .then((response: AxiosResponse) => {
-          if (response.status >= 410 && response.status < 600) {
+          // if (response.status >= 410 && response.status < 600)
+          if (response.status != 200) {
+            logger?.log(
+              `Request Failed (Retring) Due to  : ${response.status} `
+            );
             logger?.warn(
-              `<b> ${proxy.getProxyString()["less"]}</b> -  set 5 minute Idle `
+              `<i> ${proxy.getProxyString()["less"]} </i> -  set 5 minute Idle `
             );
             failed += 1;
             failedReq.push(i);
@@ -1761,14 +1768,18 @@ async function getAds(
             succeeded++;
 
             data.push(parseddaat);
-          } catch {
+          } catch (e) {
+            logger?.error(e as string);
+            console.log(e);
+            failed += 1;
+            failedReq.push(i);
             /* empty */
           }
         })
         .catch((error: AxiosError) => {
           console.error("Error:", error.status);
           logger?.warn(
-            `<b> ${proxy.getProxyString()["less"]}</b> -  set 5 minute Idle `
+            `<i> ${proxy.getProxyString()["less"]}</i> -  set 5 minute Idle `
           );
           proxy.setWait();
           failed += 1;

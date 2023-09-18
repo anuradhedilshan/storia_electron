@@ -7,9 +7,10 @@ import parseAd from "./Ad";
 import JSONWriter from "./JSONWriter";
 import Logger from "./Logger";
 import { CB } from "../../electron/render";
+import Proxy from "./proxy/Proxy";
 
 let logger: Logger | null = null;
-
+const THREADS = 2;
 export function setLoggerCallback(cb: CB): Logger {
   logger = new Logger(cb);
   return logger;
@@ -1641,79 +1642,94 @@ export async function startf(
     return;
   }
   const Writer = new JSONWriter(file);
-  console.log("STart fuck");
   console.log("fetch Url ", URL);
-  const temp: any = await (
-    await fetch(URL, { headers: Headers as HeadersInit })
-  ).json();
-  console.log("from engine", URL);
-
-  const max = temp.pageProps.data.searchAds.pagination.totalPages;
+  const max = await getMax(URL);
+  let ids: { id: string; slug: string }[] = [];
   let Loopfailed: any[] = [];
   // send count
   const stepper = max !== 0 ? 1 : 0;
-  for (let loop = 1; loop <= max + stepper; loop += 1) {
-    logger?.log(`Looping <b>${max}<b> => <b>${loop}</b>`);
-    const response = await fetch(URL.replace(/page=\d+/, "page=" + loop), {
-      headers: Headers as HeadersInit,
-    });
+  let pe: Proxy;
+  for (let loop = 1; loop <= max + stepper; loop += THREADS) {
     try {
-      if (response.ok) {
-        const Intialdata: any = await response.json();
-        // ids = 0: {id: 7572173, slug: 'garsoniera-viaduct-p-4-IDwLRP'}
-        let ids: { id: string; slug: string }[] =
-          Intialdata.pageProps.data.searchAds.items.map(
-            (e: { id: string; slug: string }) => ({
-              id: e.id,
-              slug: e.slug,
-            })
-          );
-        console.log(`Page Contain <b>${ids.length}</b> of Ads`);
-        if (Loopfailed.length > 0) ids = ids.concat(Loopfailed);
-
-        try {
-          proxylist.getProxy();
-        } catch {
-          // eslint-disable-next-line no-constant-condition
-          while (true) {
-            logger?.log("No Proxy servers useable - Entering 50s Idel Time");
-            await sleep(50000);
-            if (typeof proxylist.getProxy() == typeof Proxy) {
-              logger?.log("Proxy Get Free");
-              break;
-            }
-          }
+      pe = proxylist.getProxy();
+      ids = await getIds(URL, loop, pe);
+      logger?.log(`Main loop - <i>${loop}</i> <= <i>${max}</i> `)
+      console.log(`Page Contain <b>${ids.length}</b> of Ads`);
+      if (Loopfailed.length > 0) ids = ids.concat(Loopfailed);
+    } catch {
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        logger?.log("No Proxy servers useable - Entering 50s Idel Time");
+        await sleep(50000);
+        pe = proxylist.getProxy()
+        if (typeof pe == typeof Proxy) {
+          logger?.log("Proxy Get Free");
+          break;
         }
-        // res =  { succeeded, failed }
-        const { data, failed, failedReq } = await getAds(
-          ids,
-          BUILDID,
-          proxylist,
-          filters.estate
-        );
-        ids = [];
-        logger?.log(`got <b>${failed} </b> Failed Request -  Retring`);
-        if (data.length > 0) Writer.appendData(data);
-        if (failedReq.length > 0) Loopfailed = failedReq;
-        // send Progress
-        const p = Math.floor((loop / max) * 100);
-        if (onEvent) onEvent("progress", p);
-        // do something with response here, not outside the function
-      } else if (response.status >= 500 && response.status < 600) {
-        console.log("error @ Start 1 ");
-        loop = loop - 1;
-        continue;
       }
-    } catch (err) {
-      console.error("error @ Start 2 ", err);
-      loop = loop - 1;
-      continue;
     }
+    // res =  { succeeded, failed }
+    const { data, failed, failedReq } = await getAds(
+      ids,
+      BUILDID,
+      proxylist,
+      filters.estate
+    );
+    ids = [];
+    logger?.log(`got <b>${failed} </b> Failed Request -  Retring`);
+    if (data.length > 0) Writer.appendData(data);
+    if (failedReq.length > 0) Loopfailed = failedReq;
+    // send Progress
+    const p = Math.floor((loop / max) * 100);
+    if (onEvent) onEvent("progress", p);
+    // do something with response here, not outside the function
+
   }
   await sleep(5000);
   Writer.close();
   if (onEvent) onEvent("complete", true);
   logger?.log("****** Json Writer Commited ************");
+}
+
+async function getIds(URL: string, loop: number, p: Proxy): Promise<{ id: string; slug: string }[]> {
+  let ids: { id: string; slug: string }[] = [];
+
+  for (let i = loop; i < loop + THREADS; i++) {
+    try {
+      logger?.log(`Looping <b>${i}<b>`);
+      const response = await p.fetch(URL.replace(/page=\d+/, "page=" + i),
+        Headers as RawAxiosRequestHeaders,
+      );
+      if (response.status != 200) {
+        logger?.warn("Get Id Failed Retring ... ");
+        throw new Error("Get Id Request Failed");
+      }
+      ids = ids.concat(response.data.pageProps.data.searchAds.items.map(
+        (e: { id: string; slug: string }) => ({
+          id: e.id,
+          slug: e.slug,
+        })
+      ));
+
+    } catch (e) {
+      logger?.error(`Got error -> ${e}`)
+      loop = loop - 1;
+      continue;
+    }
+  }
+  // ids = 0: {id: 7572173, slug: 'garsoniera-viaduct-p-4-IDwLRP'}
+
+  return ids;
+}
+async function getMax(URL: string): Promise<number> {
+  const temp: any = await (
+    await fetch(URL, { headers: Headers as HeadersInit })
+  ).json();
+  const val = temp.pageProps.data.searchAds.pagination.totalPages;
+  console.log("from engine", URL);
+  logger?.log("Got " + val + " Pages");
+  return val
+
 }
 
 async function getAds(
@@ -1729,7 +1745,7 @@ async function getAds(
   let succeeded = 0;
   let failed = 0;
   const data: any[] = [];
-  let proxy = proxylist.getProxy();
+  let proxy: Proxy;
   const failedReq: any[] = [];
   // eslint-disable-next-line no-constant-condition
 
@@ -1738,16 +1754,25 @@ async function getAds(
       console.log("Worker Break here");
       break;
     }
+    await sleep(60);
+    try {
+      proxy = proxylist.getProxy();
+    } catch {
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        logger?.log("No Proxy servers useable - Entering 50s Idel Time");
+        await sleep(50000);
+        try {
+          proxy = proxylist.getProxy()
 
-    await sleep(50);
-
-    if (!proxy.canUse()) {
-      try {
-        proxy = proxylist.getProxy();
-      } catch {
-        break;
+          if (typeof proxy == typeof Proxy) {
+            logger?.log("Proxy Get Free");
+            break;
+          }
+        } catch { /* empty */ }
       }
     }
+
     if (proxy.canUse()) console.log(getAdURL(i.slug, BuildID, estate));
 
     promises.push(

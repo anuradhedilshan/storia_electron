@@ -1,6 +1,7 @@
 import axios, {
   AxiosProxyConfig,
   AxiosRequestConfig,
+  AxiosResponse,
   RawAxiosRequestHeaders,
 } from "axios";
 import { SocksProxyAgent } from "socks-proxy-agent";
@@ -15,6 +16,7 @@ export default class Proxy {
   auth?: AxiosProxyConfig["auth"];
   static TestURL = "";
   Proxyconfig: AxiosRequestConfig;
+  reseverd = false;
 
   constructor(
     host: string,
@@ -60,7 +62,7 @@ export default class Proxy {
     }
   }
 
-  fetch(url: string, headersS: RawAxiosRequestHeaders) {
+  fetch(url: string, headersS: RawAxiosRequestHeaders): Promise<AxiosResponse> {
     this.markUsed();
 
     return axios.get(url, {

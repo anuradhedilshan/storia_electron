@@ -1620,7 +1620,7 @@ export function getBuildId(parser: Document) {
 
 const mode = ["ansamblu", "oferta"];
 function getAdURL(slug: string, BUILDID: string, estate: string) {
-  console.log(estate);
+
   const m = estate == "Ansambluri" ? mode[0] : mode[1];
   const url = `https://www.storia.ro/_next/data/${BUILDID}/ro/${m}/${slug}.json?lang=ro&id=${slug}`;
   return url;
@@ -1648,7 +1648,7 @@ export async function startf(
   let Loopfailed: any[] = [];
   // send count
   const stepper = max !== 0 ? 1 : 0;
-  let pe: Proxy;
+  let pe: Proxy | boolean;
   for (let loop = 1; loop <= max + stepper; loop += THREADS) {
     try {
       pe = proxylist.getProxy();
@@ -1659,14 +1659,15 @@ export async function startf(
     } catch {
       // eslint-disable-next-line no-constant-condition
       while (true) {
-        logger?.log("No Proxy servers useable - Entering 50s Idel Time");
+        logger?.log("No Proxy servers useable - Entering 50s Idel Time startF");
         await sleep(50000);
-        pe = proxylist.getProxy()
-        if (typeof pe == typeof Proxy) {
-          logger?.log("Proxy Get Free");
-          break;
-        }
+        try {
+          pe = proxylist.getProxy()
+          break
+
+        } catch (e) { console.error(e) }
       }
+
     }
     // res =  { succeeded, failed }
     const { data, failed, failedReq } = await getAds(
@@ -1681,7 +1682,7 @@ export async function startf(
     if (failedReq.length > 0) Loopfailed = failedReq;
     // send Progress
     const p = Math.floor((loop / max) * 100);
-    if (onEvent) onEvent("progress", p);
+    if (onEvent) onEvent("progress", p < 100 ? 100 : p);
     // do something with response here, not outside the function
 
   }
@@ -1717,6 +1718,7 @@ async function getIds(URL: string, loop: number, p: Proxy): Promise<{ id: string
       continue;
     }
   }
+
   // ids = 0: {id: 7572173, slug: 'garsoniera-viaduct-p-4-IDwLRP'}
 
   return ids;
@@ -1747,33 +1749,31 @@ async function getAds(
   const data: any[] = [];
   let proxy: Proxy;
   const failedReq: any[] = [];
-  // eslint-disable-next-line no-constant-condition
 
+  try {
+    proxy = proxylist.getProxy();
+  } catch {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      logger?.log("No Proxy servers useable - Entering 50s Idel Time getAds");
+      await sleep(50000);
+      try {
+        proxy = proxylist.getProxy()
+        break;
+      } catch (e) {
+        logger?.error("error while choose Proxy : " + e)
+      }
+    }
+  }
   for (const i of ids) {
     if (succeeded >= ids.length) {
       console.log("Worker Break here");
       break;
     }
     await sleep(60);
-    try {
-      proxy = proxylist.getProxy();
-    } catch {
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        logger?.log("No Proxy servers useable - Entering 50s Idel Time");
-        await sleep(50000);
-        try {
-          proxy = proxylist.getProxy()
 
-          if (typeof proxy == typeof Proxy) {
-            logger?.log("Proxy Get Free");
-            break;
-          }
-        } catch { /* empty */ }
-      }
-    }
 
-    if (proxy.canUse()) console.log(getAdURL(i.slug, BuildID, estate));
+    // if (proxy.canUse()) console.log(getAdURL(i.slug, BuildID, estate));
 
     promises.push(
       proxy
@@ -1829,6 +1829,7 @@ async function getAds(
 
   return { succeeded, failed, data, failedReq };
 }
+
 // THis function Return Promise After Seconds of input   2023/
 
 function sleep(ms: number): Promise<unknown> {

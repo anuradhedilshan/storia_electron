@@ -105,14 +105,16 @@ export default class Proxy {
       const timeSinceLastUse = Date.now() - this.lastUsed;
       const is = timeSinceLastUse > this.cooldownTime;
       if (is) this.requestsSent = 0;
+
       return is;
     }
+
     return true;
   }
 
   // mark as USed
   markUsed() {
-    console.log("IP : ", this.host, "USed : ", this.requestsSent);
+    // console.log("IP : ", this.host, "USed : ", this.requestsSent);
 
     this.lastUsed = Date.now();
     this.requestsSent++;

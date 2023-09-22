@@ -7,7 +7,7 @@ import { ActionType } from "./store/app.store";
 import { DataView } from "./components/dataview";
 import { context } from "./store/app.store";
 import Logger_View from "./components/Logger_view";
-function padTo2Digits(num:number) {
+function padTo2Digits(num: number) {
   return num.toString().padStart(2, "0");
 }
 function formatDate(date: Date) {
@@ -39,6 +39,7 @@ export default class APP extends React.Component {
       Type: "progress" | "count" | "complete" | "error" | "details" | "warn",
       message: number | boolean | string | null
     ) => {
+      console.log(Type, message);
       switch (Type) {
         case "count":
           message = message ? message : "retry";
@@ -58,7 +59,6 @@ export default class APP extends React.Component {
           break;
         case "progress":
           console.log("Progress++++++++++++++++++++++++", message);
-
           this.context.dispatch({
             type: ActionType.SETPROGRESS,
             payload: message,

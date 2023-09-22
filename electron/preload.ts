@@ -131,7 +131,6 @@ window.onmessage = (ev) => {
 console.log("this is Preload.ts");
 
 ipcRenderer.on("event", (_e, arg) => {
-  console.log(arg);
   sendEvent(arg.Type, arg.p);
 });
 window.MyApi = {
@@ -139,7 +138,7 @@ window.MyApi = {
     return ipcRenderer.invoke("addProxy", e);
   },
   onSubmit: async (data, filepath) => {
-    console.log("On Submit",data);
+    console.log("On Submit", data);
     if (window.BuildID) {
       ipcRenderer.send("start", { buildID: window.BuildID, filepath, data });
       ipcRenderer.on("error", (_e, t) => {

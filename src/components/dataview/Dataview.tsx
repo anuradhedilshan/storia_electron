@@ -142,7 +142,7 @@ const DataView = () => {
                 type: ActionType.SET_RUNNING_STATE,
                 payload: true,
               });
-
+              
               window.MyApi.onSubmit(state.filters, filePath);
               dispatch({ type: ActionType.CLEAR_LOG, payload: null });
             } else {

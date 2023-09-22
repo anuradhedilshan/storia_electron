@@ -80,18 +80,19 @@ const logger = setLoggerCallback(f);
 
 const PL = new ProxyList(logger);
 
-ipcMain.on("start", async (event, arg) => {
+ipcMain.on("start", async (_event, arg) => {
   logger.log("Staring . . . . ");
   const { data, filepath, buildID } = arg;
   if (PL.getProxyCount() >= 1) {
     const a: string = await getRedirect(data, buildID);
     logger.log(`Get Redirecting - <i>${a}</i>`);
     startf(a, buildID, PL, filepath, data, (el, val) => {
-      event.sender.send("event", { el, val });
+      if (win) win.webContents.send("event", { Type: el, p: val });
     });
   } else {
     logger.error("No Usable Proxy");
   }
+
 });
 
 ipcMain.handle("addProxy", async (_e, arg) => {

@@ -49,6 +49,7 @@ export default class ProxyList {
   getProxy(): Proxy {
     const can = this.PROXYLIST.filter((e) => e.canUse());
     if (can.length <= 0) throw new Error("No Useble Proxy");
+    console.log("get Proxy : ", can.length);
     return can[Math.floor(Math.random() * can.length)];
   }
 

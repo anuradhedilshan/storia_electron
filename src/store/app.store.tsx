@@ -61,9 +61,9 @@ enum ActionType {
   SET_THREAD,
   SET_WORKING_PROXY_LIST,
   SET_LOGGER_DATA,
-  CLEAR_LOG
+  CLEAR_LOG,
 }
-
+// MAin ettry point - Main Main.ts
 interface Action {
   type: ActionType;
   payload: any; // You can specify the actual payload type based on the ActionType
@@ -96,9 +96,9 @@ function reducer(state: States, action: Action) {
         workingList: [...state.workingList, ...action.payload],
       };
     case ActionType.SET_LOGGER_DATA:
-      return { ...state, logger_data: state.logger_data+action.payload };
-    case ActionType.CLEAR_LOG :
-      return  { ...state, logger_data: InitialValues.logger_data };
+      return { ...state, logger_data: state.logger_data + action.payload };
+    case ActionType.CLEAR_LOG:
+      return { ...state, logger_data: InitialValues.logger_data };
     default:
       return state;
   }

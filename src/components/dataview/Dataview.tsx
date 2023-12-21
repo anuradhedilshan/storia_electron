@@ -137,7 +137,7 @@ const DataView = () => {
               state.filePath != "N/A" &&
               state.filePath != ""
             ) {
-              const filePath = `${state.filePath}/${state.filters.city}_${state.filters.estate}_${state.filters.transaction}_.json`;
+              const filePath = `${state.filePath}/.${state.filters.city}_${state.filters.estate}_${state.filters.transaction}_`;
               dispatch({
                 type: ActionType.SET_RUNNING_STATE,
                 payload: true,

@@ -1,0 +1,17 @@
+May I suggest the following prioritization:
+
+1. Storia: Implement the option to set a separate location/path for the temp file. 
+If possible, it would be great to be able to set the location once and then remember the path 
+for both the temp file and the output file
+
+2. Storia: it would be great if the IP/proxies could be 
+imported (e.g. a text file with every proxy parameter on a line) vs 
+the current option of copy-paste in a window. I can provide the text file 
+I use for copy-pasting into the window
+
+
+3. Storia: if possible to implement shortcuts/triggers to 
+the different combinations of property types and transaction types in the 
+search parameters (e.g. apartments x sale, apartments x rent, case x sell, case x rent, etc.).
+ It would be useful for the whole Romania
+

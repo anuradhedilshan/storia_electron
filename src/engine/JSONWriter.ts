@@ -4,10 +4,11 @@ class JSONWriter {
   private writeStream: fs.WriteStream;
   private isOpen = false;
   private prev = false;
-  private FIlename : string;
+  private FIlename: string;
 
   constructor(filePath: string) {
     this.FIlename = filePath;
+    // console.log("********* - ", filePath);
     this.writeStream = fs.createWriteStream(filePath, { flags: "w" });
     this.writeStream.write("[\n");
     this.isOpen = true;
@@ -33,10 +34,14 @@ class JSONWriter {
       this.writeStream.write("\n]");
       this.writeStream.end();
       this.writeStream.close();
-      fs.rename(this.FIlename,this.FIlename.replace(/^\./, '').replace(/\./g, '_') + '.json',()=>{
-        console.log(this.FIlename.replace(/^\./, '')+".json");
-        console.log("\nFile Renamed!\n"); 
-      })
+      fs.rename(
+        this.FIlename,
+        this.FIlename.replace(/^\./, "").replace(/\./g, "_") + ".json",
+        () => {
+          // console.log(this.FIlename.replace(/^\./, "") + ".json");
+          // console.log("\nFile Renamed!\n");
+        }
+      );
       this.isOpen = false;
     }
   }

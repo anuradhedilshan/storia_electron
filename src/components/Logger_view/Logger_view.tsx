@@ -15,7 +15,7 @@ const Logger_View = () => {
             p: 2,
             border: "1px solid black",
             mt: 2,
-            width: "100%",
+            width: "auto",
             display: "block",
             minHeight: expand ? "500px" : "200px",
             maxHeight: 100,

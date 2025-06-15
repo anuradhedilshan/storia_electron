@@ -15,3 +15,4 @@ the different combinations of property types and transaction types in the
 search parameters (e.g. apartments x sale, apartments x rent, case x sell, case x rent, etc.).
  It would be useful for the whole Romania
 
+

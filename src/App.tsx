@@ -70,6 +70,10 @@ export default class APP extends React.Component {
             payload: message,
           });
           this.context.dispatch({
+            type: ActionType.SETPROGRESS,
+            payload: false,
+          });
+          this.context.dispatch({
             type: ActionType.SET_RUNNING_STATE,
             payload: false,
           });

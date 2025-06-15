@@ -1,0 +1,11 @@
+{
+  "filterAttributes": {
+    "estate": "FLAT",
+    "market": "ALL",
+    "ownerTypeSingleSelect": "ALL",
+    "transaction": "SELL"
+  },
+  "filterLocations": {
+    "byDomainId": [{ "domainId": "alba/alba-iulia/ampoi-i" }]
+  }
+}

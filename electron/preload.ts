@@ -1,6 +1,10 @@
 import fetch from "node-fetch";
-import { getBuildId, getRedirect } from "../src/engine/Engine";
+import { getBuildId } from "../src/engine/Engine";
 import { ipcRenderer } from "electron";
+import {
+  PropertyTypeKey,
+  TransactionType,
+} from "../src/engine/v2/getCount";
 // import { logger } from "./main";
 
 function domReady(
@@ -153,25 +157,20 @@ window.MyApi = {
     }
   },
   OnEvent: null,
-  async getCount(data) {
+  async getCount(data: {
+    estate: PropertyTypeKey;
+    transaction: TransactionType;
+    city: string;
+  }) {
+    console.log(data);
+
     if (window.BuildID) {
       try {
-        const a: string = await getRedirect(data, window.BuildID);
-        sendEvent("details", `Get Count url : <b> ${a} </b>`);
-        const temp: any = await (
-          await fetch(a, {
-            headers: {
-              "User-Agent":
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
-            },
-          })
-        ).json();
-        // send count
-
-        const count = temp.pageProps.data.searchAds.pagination.totalResults;
+        const a = await ipcRenderer.invoke("count", data);
+        console.log("getCoutnt", a);
         if (window.MyApi.OnEvent)
-          window.MyApi.OnEvent("details", `Got <b>${count}</b> as Count`);
-        sendEvent("count", count);
+          window.MyApi.OnEvent("details", `Got <b>${a}</b> as Count`);
+        sendEvent("count", a);
       } catch (error) {
         if (window.MyApi.OnEvent)
           window.MyApi.OnEvent("error", "Failed to get Count Please Try Again");

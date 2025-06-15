@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export default function parseAd(data: any): string {
   delete data.images;
+
   const d = {
     id: data.id,
     market: data.market,
@@ -11,21 +13,21 @@ export default function parseAd(data: any): string {
     exclusiveOffer: data.exclusiveOffer,
     features: getObjectValue(data.features),
     // target
-    area: data.target.Area,
-    Building_floors_num: getObjectValue(data.target.Building_floors_num),
-    Building_type: getObjectValue(data.target.Building_type),
-    Condition: getObjectValue(data.target.Condition),
-    Construction_year: getObjectValue(data.target.Construction_year),
-    Infrastructure: getObjectValue(data.target.Infrastructure),
-    Location: getObjectValue(data.target.Location),
-    Main: getObjectValue(data.target.Main),
-    MarketType: getObjectValue(data.target.MarketType),
-    Price_per_m: getObjectValue(data.target.Price_per_m),
-    ProperType: getObjectValue(data.target.ProperType),
-    Rooms_num: getObjectValue(data.target.Rooms_num),
-    Security: getObjectValue(data.target.Security),
-    Wc_count: getObjectValue(data.target.Wc_count),
-    user_type: getObjectValue(data.target.user_type),
+    area: data.target?.Area || "N/A",
+    MarketType: getObjectValue(data.target?.MarketType),
+    ProperType: getObjectValue(data.target?.ProperType),
+    Rooms_num: getObjectValue(data.target?.Rooms_num),
+    Price: data.target?.Price || "N/A",
+    Price_per_m: getObjectValue(data.target?.Price_per_m),
+    user_type: getObjectValue(data.target?.user_type),
+    OfferType: getObjectValue(data.target?.OfferType),
+    // property props
+    property_area: data.property?.area?.value || "N/A",
+    numberOfRooms: data.property?.properties?.numberOfRooms || "N/A",
+    numberOfFloors: data.property?.buildingProperties?.numberOfFloors || "N/A",
+    year: data.property?.buildingProperties?.year || "N/A",
+    building_type: data.property?.buildingProperties?.type || "N/A",
+    material: data.property?.buildingProperties?.material || "N/A",
     // characteristics
     ...characteristicsFormateData(data),
     // topInfo
@@ -33,19 +35,26 @@ export default function parseAd(data: any): string {
     // additionalInformation
     ...formatData(data, "additionalInformation"),
     // location
-    latitude: data.location.coordinates.latitude,
-    longitude: data.location.coordinates.longitude,
+    latitude: data.location?.coordinates?.latitude || "N/A",
+    longitude: data.location?.coordinates?.longitude || "N/A",
     // address
-    street: data.location?.address?.street?.name || "N/A",
+    street: data.location?.address?.street || "N/A",
     subdistrict: data.location?.address?.subdistrict || "N/A",
     district: data.location?.address?.district || "N/A",
     city: data.location?.address?.city?.name || "N/A",
     municipality: data.location?.address?.municipality || "N/A",
     postalCode: data.location?.address?.postalCode || "N/A",
+    province: data.location?.address?.province?.name || "N/A",
+    county: data.location?.address?.county?.name || "N/A",
     // owner
     ownerName: data.owner?.name || "N/A",
     ownerType: data.owner?.type || "N/A",
-    phones: `[${data.owner.phones.toString()}]`,
+    phones: `[${data.owner?.phones?.toString() || ""}]`,
+    // other
+    title: data.title || "N/A",
+    description: data.description || "N/A",
+    url: data.url || "N/A",
+    externalId: data.externalId || "N/A"
   };
 
   return d;
@@ -60,7 +69,7 @@ function getObjectValue(obj: any) {
     } else {
       return `[${obj.toString()}]`;
     }
-  } else if (obj === undefined) {
+  } else if (obj === undefined || obj === null) {
     return "N/A";
   } else {
     return obj.toString();
@@ -68,10 +77,11 @@ function getObjectValue(obj: any) {
 }
 
 function characteristicsFormateData(data: any) {
+  if (!Array.isArray(data["characteristics"])) return {};
   return data["characteristics"].reduce(
     (obj: any, info: { label: any; localizedValue: any }) => {
       const { label, localizedValue } = info;
-      const value = localizedValue != "" ? localizedValue : "N/A";
+      const value = localizedValue !== "" ? localizedValue : "N/A";
       return Object.assign(obj, { [label]: value });
     },
     {}
@@ -79,6 +89,7 @@ function characteristicsFormateData(data: any) {
 }
 
 function formatData(data: { [x: string]: any[] }, key: string) {
+  if (!Array.isArray(data[key])) return {};
   return data[key].reduce((obj: any, info: { label: any; values: any }) => {
     const { label, values } = info;
     const value = values.length > 0 ? values[0] : "N/A";

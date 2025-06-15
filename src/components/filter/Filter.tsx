@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import Grid from "@mui/joy/Grid";
 import Select from "./Select";
 import FmdGoodIcon from "@mui/icons-material/FmdGood";

@@ -6,6 +6,7 @@ import { dialog } from "electron";
 import { getRedirect, setLoggerCallback, startf } from "../src/engine/Engine";
 import Proxy from "../src/engine/proxy/Proxy";
 import { CB } from "./render";
+import { getStoriaPropertyCount } from "../src/engine/v2/getCount";
 
 // The built directory structure
 //
@@ -92,7 +93,12 @@ ipcMain.on("start", async (_event, arg) => {
   } else {
     logger.error("No Usable Proxy");
   }
+});
 
+ipcMain.handle("count", async (_event, arg) => {
+  const { city, estate, transaction } = arg;
+  const a = await getStoriaPropertyCount(estate, transaction, city);
+  return a;
 });
 
 ipcMain.handle("addProxy", async (_e, arg) => {

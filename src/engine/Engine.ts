@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { AxiosError, AxiosResponse, RawAxiosRequestHeaders } from "axios";
 import ProxyList from "./proxy";
 import fetch from "node-fetch";
@@ -1620,7 +1619,6 @@ export function getBuildId(parser: Document) {
 
 const mode = ["ansamblu", "oferta"];
 function getAdURL(slug: string, BUILDID: string, estate: string) {
-
   const m = estate == "Ansambluri" ? mode[0] : mode[1];
   const url = `https://www.storia.ro/_next/data/${BUILDID}/ro/${m}/${slug}.json?lang=ro&id=${slug}`;
   return url;
@@ -1648,12 +1646,13 @@ export async function startf(
   let Loopfailed: any[] = [];
   // send count
   const stepper = max !== 0 ? 1 : 0;
+
   let pe: Proxy | boolean;
-  for (let loop = 1; loop <= max + stepper; loop += THREADS) {
+  for (let loop = 1; loop < max + stepper; loop += THREADS) {
     try {
       pe = proxylist.getProxy();
       ids = await getIds(URL, loop, pe);
-      logger?.log(`Main loop - <i>${loop}</i> <= <i>${max}</i> `)
+      logger?.log(`Main loop - <i>${loop}</i> <= <i>${max}</i> `);
       console.log(`Page Contain <b>${ids.length}</b> of Ads`);
       if (Loopfailed.length > 0) ids = ids.concat(Loopfailed);
     } catch {
@@ -1662,12 +1661,12 @@ export async function startf(
         logger?.log("No Proxy servers useable - Entering 50s Idel Time startF");
         await sleep(50000);
         try {
-          pe = proxylist.getProxy()
-          break
-
-        } catch (e) { console.error(e) }
+          pe = proxylist.getProxy();
+          break;
+        } catch (e) {
+          console.error(e);
+        }
       }
-
     }
     // res =  { succeeded, failed }
     const { data, failed, failedReq } = await getAds(
@@ -1684,7 +1683,6 @@ export async function startf(
     const p = Math.floor((loop / max) * 100);
     if (onEvent) onEvent("progress", p < 100 ? 100 : p);
     // do something with response here, not outside the function
-
   }
   await sleep(5000);
   Writer.close();
@@ -1692,28 +1690,36 @@ export async function startf(
   logger?.log("****** Json Writer Commited ************");
 }
 
-async function getIds(URL: string, loop: number, p: Proxy): Promise<{ id: string; slug: string }[]> {
+async function getIds(
+  URL: string,
+  loop: number,
+  p: Proxy
+): Promise<{ id: string; slug: string }[]> {
   let ids: { id: string; slug: string }[] = [];
 
   for (let i = loop; i < loop + THREADS; i++) {
     try {
-      logger?.log(`Looping <b>${i}<b>`);
-      const response = await p.fetch(URL.replace(/page=\d+/, "page=" + i),
-        Headers as RawAxiosRequestHeaders,
+      logger?.log(`Get id  <b>${i}<b>`);
+      const response = await p.fetch(
+        URL.replace(/page=\d+/, "page=" + i),
+        Headers as RawAxiosRequestHeaders
       );
       if (response.status != 200) {
         logger?.warn("Get Id Failed Retring ... ");
         throw new Error("Get Id Request Failed");
       }
-      ids = ids.concat(response.data.pageProps.data.searchAds.items.map(
-        (e: { id: string; slug: string }) => ({
-          id: e.id,
-          slug: e.slug,
-        })
-      ));
-
+      if (response.data.pageProps.data.searchAds.items) {
+        ids = ids.concat(
+          response.data.pageProps.data.searchAds.items.map(
+            (e: { id: string; slug: string }) => ({
+              id: e.id,
+              slug: e.slug,
+            })
+          )
+        );
+      }
     } catch (e) {
-      logger?.error(`Got error -> ${e}`)
+      logger?.error(`Got error -> ${e}`);
       loop = loop - 1;
       continue;
     }
@@ -1730,8 +1736,7 @@ async function getMax(URL: string): Promise<number> {
   const val = temp.pageProps.data.searchAds.pagination.totalPages;
   console.log("from engine", URL);
   logger?.log("Got " + val + " Pages");
-  return val
-
+  return val;
 }
 
 async function getAds(
@@ -1758,10 +1763,10 @@ async function getAds(
       logger?.log("No Proxy servers useable - Entering 50s Idel Time getAds");
       await sleep(50000);
       try {
-        proxy = proxylist.getProxy()
+        proxy = proxylist.getProxy();
         break;
       } catch (e) {
-        logger?.error("error while choose Proxy : " + e)
+        logger?.error("error while choose Proxy : " + e);
       }
     }
   }
@@ -1771,7 +1776,6 @@ async function getAds(
       break;
     }
     await sleep(60);
-
 
     // if (proxy.canUse()) console.log(getAdURL(i.slug, BuildID, estate));
 
